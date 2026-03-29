@@ -4,71 +4,107 @@ import TaskList from "./components/TaskList";
 import "./App.css";
 
 function App() {
-  const [tasks, setTasks] = useState([]);
-  const [filter, setFilter] = useState("all");
-const [darkMode, setDarkMode] = useState(false);
-  // Load tasks from localStorage
-  useEffect(() => {
-    const savedTasks = JSON.parse(localStorage.getItem("tasks"));
-    if (savedTasks) {
-      setTasks(savedTasks);
-    }
-  }, []);
 
-  // Save tasks to localStorage
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem("tasks");
+    return savedTasks ? JSON.parse(savedTasks) : [];
+  });
+
+  const [filter, setFilter] = useState("all");
+  const [darkMode, setDarkMode] = useState(false);
+  const [search, setSearch] = useState("");   // ✅ FIXED POSITION
+
+  // Save tasks
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  const addTask = (text) => {
-    setTasks([...tasks, { text, completed: false }]);
+  // Add task
+  const addTask = (text, date) => {
+
+    const newTask = {
+      id: Date.now(),
+      text,
+      date,
+      completed:false
+    };
+
+    setTasks([...tasks, newTask]);
   };
 
-  const deleteTask = (index) => {
-    const updatedTasks = tasks.filter((_, i) => i !== index);
-    setTasks(updatedTasks);
+  // Delete task
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((task) => task.id !== id));
   };
 
-  const toggleTask = (index) => {
-    const updatedTasks = tasks.map((task, i) =>
-      i === index ? { ...task, completed: !task.completed } : task
+  // Clear completed
+  const clearCompleted = () => {
+    setTasks(tasks.filter((task) => !task.completed));
+  };
+
+  // Toggle completed
+  const toggleTask = (id) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id
+          ? { ...task, completed: !task.completed }
+          : task
+      )
     );
-    setTasks(updatedTasks);
   };
 
-  const updateTask = (index, newText) => {
-  const updatedTasks = tasks.map((task, i) =>
-    i === index ? { ...task, text: newText } : task
-  );
-  setTasks(updatedTasks);
-};
+  // Update task
+  const updateTask = (id, newText) => {
+    setTasks(
+      tasks.map((task) =>
+        task.id === id ? { ...task, text: newText } : task
+      )
+    );
+  };
 
-  // ✅ Task statistics (CORRECT PLACE)
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(task => task.completed).length;
+  const completedTasks = tasks.filter((task) => task.completed).length;
   const pendingTasks = totalTasks - completedTasks;
 
-  // ✅ Filtering logic
   const filteredTasks = tasks.filter((task) => {
-    if (filter === "completed") return task.completed;
-    if (filter === "pending") return !task.completed;
-    return true;
+
+    const matchesSearch = task.text
+      .toLowerCase()
+      .includes(search.toLowerCase());
+
+    if (filter === "completed")
+      return task.completed && matchesSearch;
+
+    if (filter === "pending")
+      return !task.completed && matchesSearch;
+
+    return matchesSearch;
   });
 
   return (
     <div className={darkMode ? "app dark" : "app"}>
       <div className="card">
+
         <div className="top-bar">
-  <button 
-    className="dark-toggle"
-    onClick={() => setDarkMode(!darkMode)}
-  >
-    {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
-  </button>
-</div>
+          <button
+            className="dark-toggle"
+            onClick={() => setDarkMode(!darkMode)}
+          >
+            {darkMode ? "☀ Light Mode" : "🌙 Dark Mode"}
+          </button>
+        </div>
+
         <h1>Smart Task Manager</h1>
 
         <TaskInput addTask={addTask} />
+
+        <input
+          type="text"
+          placeholder="Search tasks..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="search-input"
+        />
 
         <div className="filters">
           <button
@@ -93,19 +129,26 @@ const [darkMode, setDarkMode] = useState(false);
           </button>
         </div>
 
-        {/* ✅ Stats Section */}
         <div className="task-stats">
           <span>Total: {totalTasks}</span>
           <span>Completed: {completedTasks}</span>
           <span>Pending: {pendingTasks}</span>
         </div>
 
-       <TaskList
-  tasks={filteredTasks}
-  deleteTask={deleteTask}
-  toggleTask={toggleTask}
-  updateTask={updateTask}
-/>
+        <button
+          onClick={clearCompleted}
+          className="clear-btn"
+        >
+          Clear Completed
+        </button>
+
+        <TaskList
+          tasks={filteredTasks}
+          deleteTask={deleteTask}
+          toggleTask={toggleTask}
+          updateTask={updateTask}
+        />
+
       </div>
     </div>
   );

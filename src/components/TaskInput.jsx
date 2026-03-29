@@ -2,29 +2,37 @@ import { useState } from "react";
 
 function TaskInput({ addTask }) {
   const [input, setInput] = useState("");
+  const [date, setDate] = useState("");
 
   const handleAdd = () => {
     if (input.trim() === "") return;
-    addTask(input);
+
+    addTask(input, date);   // ✅ only once
     setInput("");
+    setDate("");
   };
 
   return (
-    <div style={{ marginBottom: "20px" }}>
-      <input
-        type="text"
-        placeholder="Enter task..."
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        style={{ padding: "8px", width: "250px" }}
-      />
-      <button
-        onClick={handleAdd}
-        style={{ padding: "8px", marginLeft: "5px" }}
-      >
-        Add
-      </button>
-    </div>
+    <div className="task-input-container">
+  
+  <div className="input-group">
+    <input
+      type="text"
+      placeholder="Enter task..."
+      value={input}
+      onChange={(e) => setInput(e.target.value)}
+    />
+
+    <input
+      type="date"
+      value={date}
+      onChange={(e) => setDate(e.target.value)}
+    />
+  </div>
+
+  <button onClick={handleAdd}>Add</button>
+
+</div>
   );
 }
 
